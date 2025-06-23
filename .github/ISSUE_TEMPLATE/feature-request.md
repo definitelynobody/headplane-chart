@@ -14,66 +14,10 @@ assignees: ''
 
 <!-- What pain point or limitation? -->
 
-## 📄 Your values.yaml
-
-```yaml
-# Your current values.yaml (redact sensitive data)
-```
-
-## 🎨 Example
-
-```yaml
-# How it might look
-newFeature:
-  enabled: true
-  config: "value"
-```
-
-## 📊 Priority
-
-- [ ] Low - Nice to have
-- [ ] Medium - Would improve workflow  
-- [ ] High - Blocking current work
-- [ ] Critical - Cannot proceed without this
-
 ## 🔒 Security
 
 **Removed:** API keys, passwords, personal domains
 
-## 🖥️ Environment Information
-
-### Kubernetes Version
-```bash
-kubectl version --short
-```
-
-### Helm Version
-```bash
-helm version
-```
-
-## 🎨 Mockup/Example
-
-<!-- If applicable, provide a mockup or example of how this feature might look or work -->
-
-## 📋 Use Case
-
-<!-- Describe your specific use case and how this feature would help -->
-
-## 🖥️ Environment Information
-
-### Kubernetes Version
-```bash
-kubectl version --short
-```
-
-### Helm Version
-```bash
-helm version
-```
-
-### Operating System
-<!-- e.g., Ubuntu 22.04, macOS 14.0, Windows 11 -->
 
 ## 📄 Current Configuration
 
@@ -84,23 +28,6 @@ helm version
 # Paste your current values.yaml here
 # IMPORTANT: Remove or redact any sensitive information before posting!
 
-```
-
-### Current Helm Installation
-```bash
-# Paste your current helm install/upgrade command
-```
-
-## 🎨 Mockup/Example
-
-<!-- If applicable, provide a mockup or example of how this feature might look or work -->
-
-```yaml
-# Example of how the new configuration might look
-newFeature:
-  enabled: true
-  config:
-    option1: "value1"
 ```
 
 ## 📊 Impact Assessment
@@ -118,14 +45,6 @@ newFeature:
 - [ ] Medium - New component or significant config changes
 - [ ] Large - Major architectural change
 
-## 🔗 Related Issues
-
-<!-- Link any related issues or discussions -->
-
-## 📚 Additional Context
-
-<!-- Add any other context, screenshots, or references about the feature request -->
-
 ## ✅ Checklist
 
 Before submitting this feature request, please ensure you have:
@@ -136,14 +55,4 @@ Before submitting this feature request, please ensure you have:
 - [ ] ✅ Included your current configuration (with sensitive data redacted)
 - [ ] ✅ Considered the impact and scope of the feature
 
-## 🔒 Security Note
-
-**IMPORTANT**: Before posting your `values.yaml`, please ensure you have:
-- ❌ Removed any API keys or tokens
-- ❌ Redacted personal domain names
-- ❌ Removed any passwords or secrets
-- ❌ Anonymized any identifying information
-
----
-
-**Thank you for contributing to the Headplane Helm Chart! 🚀** 
+## More information:
