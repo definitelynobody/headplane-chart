@@ -60,12 +60,6 @@ Before submitting this issue, please ensure you have:
 - [ ] ✅ Confirmed the issue occurs with the latest chart version
 - [ ] ✅ Tested with minimal configuration if possible
 
-## 📞 Additional Help
-
-- Checking the [Headplane documentation](https://github.com/tale/headplane)
-- Checking the [Headscale documentation](https://github.com/juanfont/headscale)
-- Reviewing existing issues for similar problems
-
 ---
 
 **Thank you for helping improve the Headplane Helm Chart! 🚀** 
