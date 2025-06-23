@@ -336,6 +336,8 @@ jobs:
                 kubectl logs -n "$namespace" "$pod" --all-containers --tail=10 || echo "No logs available for $pod"
               elif [ "$pod_status" = "Pending" ]; then
                 echo "[$test_name] Pod $pod is still pending - normal during startup"
+              elif [ "$pod_status" = "Running" ]; then
+                echo "[$test_name] Pod $pod has succeeded - this is expected for unfinished jobs"
               elif [ "$pod_status" = "Succeeded" ]; then
                 echo "[$test_name] Pod $pod has succeeded - this is expected for completed jobs"
               else
