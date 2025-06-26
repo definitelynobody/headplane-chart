@@ -1,12 +1,8 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: headplane-update-api-token
+  name: headscale-generate-token
   namespace: {{ .Release.Namespace }}
-  annotations:
-    "helm.sh/hook": pre-install,pre-upgrade
-    "helm.sh/hook-weight": "1"
-    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 spec:
   backoffLimit: 5
   ttlSecondsAfterFinished: 300
@@ -15,7 +11,7 @@ spec:
       restartPolicy: Never
       serviceAccountName: headscale-token
       containers:
-        - name: headplane-update-api-token
+        - name: headscale-generate-token
           image: bitnami/kubectl:latest
           command:
             - /bin/sh
@@ -53,40 +49,21 @@ spec:
               TOKEN=$(kubectl exec headplane-0 -c headscale -n {{ .Release.Namespace }} -- headscale apikeys create -e 100y)
               echo "Generated API token: $TOKEN"
               
-              echo "Updating headplane-config secret with real API token..."
-              cat <<EOF | kubectl apply -f -
-              apiVersion: v1
-              kind: Secret
-              metadata:
-                name: headplane-config
-                namespace: {{ .Release.Namespace }}
-              type: Opaque
-              stringData:
-                config.yaml: |
-                  server:
-                    host: "0.0.0.0"
-                    port: 3000
-                    cookie_secure: true
-                    cookie_secret: "{{ .Values.headplane.config.server.cookie_secret }}"
-                  headscale:
-                    url: "{{ .Values.headplane.config.headscale.url }}"
-                    config_path: "/etc/headscale/config.yaml"
-                    config_strict: "true"
-                  integration:
-                    kubernetes:
-                      enabled: true
-                      validate_manifest: true
-                      pod_name: "headplane-0"
-              {{- if .Values.headplane.oidc.enabled }}
-                  oidc:
-                    issuer: "{{ .Values.headplane.oidc.issuer | trimSuffix "/" }}{{- if not (hasSuffix "/.well-known/openid-configuration" .Values.headplane.oidc.issuer) }}/.well-known/openid-configuration{{- end }}"
-                    disable_api_key_login: {{ .Values.headplane.oidc.disable_api_key_login }}
-                    headscale_api_key: "$TOKEN"
-                    token_endpoint_auth_method: {{ .Values.headplane.oidc.token_endpoint_auth_method | quote }}
-                    redirect_uri: {{ .Values.headplane.oidc.redirect_uri | quote }}
-                    client_id: {{ .Values.headplane.oidc.client_id | quote }}
-              {{- end }}
-              EOF
+              echo "Updating secrets with real API token..."
+              
+              # Update the headscale-api-token secret
+              kubectl patch secret headscale-api-token -n {{ .Release.Namespace }} --type='merge' -p="{\"stringData\":{\"HEADPLANE_OIDC__HEADSCALE_API_KEY\":\"$TOKEN\"}}"
+              
+              # Get the current headplane-config and update it
+              kubectl get secret headplane-config -n {{ .Release.Namespace }} -o yaml > /tmp/headplane-config.yaml
+              
+              # Replace placeholder with actual token in the config
+              sed -i "s/headscale_api_key: \"placeholder\"/headscale_api_key: \"$TOKEN\"/g" /tmp/headplane-config.yaml
+              
+              # Apply the updated config
+              kubectl apply -f /tmp/headplane-config.yaml
+              
+              rm -f /tmp/headplane-config.yaml
               
               echo "Restarting Headplane to pick up new API token..."
               kubectl rollout restart statefulset/headplane -n {{ .Release.Namespace }}
