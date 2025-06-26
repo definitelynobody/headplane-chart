@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📖 Documentation
+    url: https://github.com/tale/headplane
+    about: Check the Headplane documentation for setup and configuration guides
+  - name: 🐛 Headscale Issues
+    url: https://github.com/juanfont/headscale/issues
+    about: Report issues related to Headscale itself
+  - name: 💬 Discussions
+    url: https://github.com/antoniolago/headplane-chart/discussions
+    about: Start a discussion or ask questions in the community 
