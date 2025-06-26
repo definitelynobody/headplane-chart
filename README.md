@@ -169,6 +169,26 @@ kubectl create secret generic oidc-secrets \
 
 Then omit the `client_secret` and `client_id` fields from your values.yaml.
 
+## Tailscale Relay
+
+Enable the embedded Tailscale relay to access cluster services via your Tailscale network:
+
+```yaml
+relay:
+  enabled: true
+  config:
+    authKey: "tskey-auth-your-key"
+    hostname: "k8s-cluster-relay"
+    routes: "10.42.0.0/16,10.43.0.0/16"  # Adjust for your cluster CIDRs
+```
+
+**Setup:**
+1. Generate pre-auth key: `kubectl exec headplane-0 -c headscale -- headscale preauthkey create --user <id>`
+2. Create secret: `kubectl create secret generic tailscale-auth --from-literal=TS_AUTHKEY=<key>`
+3. Enable route acceptance on clients: `tailscale up --accept-routes`
+
+**Access services directly:** `curl http://service-cluster-ip:port`
+
 ## License
 Copyright © 2025 antoniolago
 

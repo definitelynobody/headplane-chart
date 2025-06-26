@@ -17,6 +17,31 @@ spec:
         app: tailscale
     spec:
       serviceAccountName: "tailscale-relay"
+      {{- if .Values.relay.config.routes }}
+      initContainers:
+      - name: setup-routes
+        image: busybox:1.35
+        command: ['sh', '-c']
+        args:
+        - |
+          # Get default gateway automatically
+          GATEWAY=$(ip route show default | awk '{print $3}' | head -1)
+          echo "Using gateway: $GATEWAY"
+          
+          # Add routes for all configured networks
+          {{- range $route := (split "," .Values.relay.config.routes) }}
+          {{- $cleanRoute := trim $route }}
+          echo "Adding route: {{ $cleanRoute }} via $GATEWAY"
+          ip route add {{ $cleanRoute }} via $GATEWAY dev eth0 || echo "Route {{ $cleanRoute }} already exists or failed"
+          {{- end }}
+          
+          echo "Route setup complete"
+          ip route show
+        securityContext:
+          capabilities:
+            add:
+              - NET_ADMIN
+      {{- end }}
       containers:
       - name: tailscale
         image: {{ .Values.relay.image }}

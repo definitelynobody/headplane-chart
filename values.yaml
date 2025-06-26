@@ -159,17 +159,17 @@ relay:
     # if not provided, will use TS_AUTHKEY from tailscale-auth secret
     authKey: ""
     # Hostname for the relay
-    hostname: "example.com"
+    hostname: "k8s-cluster-relay"
     # Exit node configuration
-    exit_node: "example.com"
+    exit_node: ""
     # Tailscale login server URL
     login_server: "https://vpn.example.com"
     # Whether to advertise as exit node
-    advertise_exit_node: "true"
+    advertise_exit_node: "false"
     # Enable firewall debug mode
     firewall_debug: "false"
-    # Routes to advertise
-    routes: "10.0.0.0/8"
+    # Routes to advertise (adjust for your cluster CIDRs)
+    routes: "10.42.0.0/16,10.43.0.0/16"
   pvc:
     # Enable persistent storage for the relay
     enabled: false
