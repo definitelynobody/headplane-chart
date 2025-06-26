@@ -180,8 +180,8 @@ relay:
       - ReadWriteOnce
     # Storage size for the PVC
     storage: 1Gi
-#  storageClassName: default
-
+    # Storage class name for the PVC
+    storageClassName: ""
 # Persistent volume claim for Headscale
 pvc:
   # Enable persistent storage for Headscale
