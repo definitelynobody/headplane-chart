@@ -120,51 +120,52 @@ helm uninstall headplane
 
 ### OIDC Configuration
 
-To use OIDC, you must provide the OIDC client secrets via Kubernetes secret:
+The chart automatically creates OIDC secrets when OIDC is enabled. Configure your OIDC provider settings in `values.yaml`:
 
-```sh
-kubectl create secret generic oidc-secrets \
-  --from-literal=HEADPLANE_OIDC__CLIENT_SECRET=your-headplane-oidc-client-secret \
-  --from-literal=HEADPLANE_OIDC__CLIENT_ID=your-headplane-oidc-client-id \
-  --from-literal=HEADSCALE_OIDC__CLIENT_SECRET=your-headscale-oidc-client-secret \
-  --from-literal=HEADSCALE_OIDC__CLIENT_ID=your-headscale-oidc-client-id \
-  -n <namespace>
-```
-
-Then enable OIDC in your `values.yaml`:
 ```yaml
 headplane:
   oidc:
     enabled: true
-    issuer: "https://your-oidc-issuer-url.com"
-    redirect_uri: "https://your-headplane-admin-domain.com/admin/oidc/callback"
-    secret_name: "oidc-secrets"  # Name of your OIDC secret
+    issuer: "https://your-oidc-provider.com/application/o/headplane/"
+    client_id: "headplane-client-id"
+    client_secret: "your-headplane-client-secret"
+    redirect_uri: "https://your-headplane-domain.com/admin/oidc/callback"
+    token_endpoint_auth_method: "client_secret_post"
 
 headscale:
   oidc:
     enabled: true
-    issuer: "https://your-oidc-issuer.com"
-    secret_name: "oidc-secrets"  # Same secret as Headplane
+    issuer: "https://your-oidc-provider.com/application/o/headscale/"
+    client_id: "headscale-client-id"
+    client_secret: "your-headscale-client-secret"
 ```
 
-You can add any additional environment variables by creating more secrets or config-maps and adding them to the `envFrom` section. For example, to add custom configuration:
+**Important Notes:**
+- The chart will automatically append `/.well-known/openid-configuration` to the Headplane issuer URL if not present
+- Headscale issuer URL should be the base application URL (without `.well-known/openid-configuration`)
+- Client secrets are automatically stored in Kubernetes secrets
+- The API token generation job will retry if it fails initially
+
+**OIDC Provider Setup:**
+You'll need to create two applications in your OIDC provider:
+1. **Headplane Application**: For admin interface access
+   - Redirect URI: `https://your-headplane-domain.com/admin/oidc/callback`
+2. **Headscale Application**: For VPN client authentication
+   - Redirect URI: `https://your-headscale-domain.com/oidc/callback`
+
+**Alternative Manual Secret Creation:**
+If you prefer to manage secrets manually:
 
 ```sh
-kubectl create secret generic headplane-custom-config \
-  --from-literal=CUSTOM_VAR=value \
-  --from-literal=ANOTHER_VAR=another-value \
+kubectl create secret generic oidc-secrets \
+  --from-literal=HEADPLANE_OIDC__CLIENT_SECRET=your-headplane-client-secret \
+  --from-literal=HEADPLANE_OIDC__CLIENT_ID=your-headplane-client-id \
+  --from-literal=HEADSCALE_OIDC__CLIENT_SECRET=your-headscale-client-secret \
+  --from-literal=HEADSCALE_OIDC__CLIENT_ID=your-headscale-client-id \
   -n <namespace>
 ```
 
-Then add it to your values:
-```yaml
-headplane:
-  envFrom:
-    - secretRef:
-        name: headplane-custom-config
-```
-
-Note: Make sure to keep your secrets secure and never commit them to version control. Consider using a secrets management solution in production.
+Then omit the `client_secret` and `client_id` fields from your values.yaml.
 
 ## License
 Copyright © 2025 antoniolago

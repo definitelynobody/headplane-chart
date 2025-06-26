@@ -15,6 +15,8 @@ headplane:
     redirect_uri: "https://your-headplane-admin-domain.com/admin/oidc/callback"
     # OIDC client ID
     client_id: "REPLACE_IT_WITH_YOUR_OIDC_CLIENT_ID_FOR_HEADPLANE"
+    # OIDC client secret
+    client_secret: "REPLACE_IT_WITH_YOUR_OIDC_CLIENT_SECRET_FOR_HEADPLANE"
     # Name of the secret containing OIDC credentials
     secret_name: "oidc-secrets"
   config:
@@ -25,6 +27,8 @@ headplane:
       port: 3000
       # Use secure cookies (should be true in production)
       cookie_secure: true
+      # Cookie secret for session management
+      cookie_secret: "REPLACE_WITH_YOUR_RANDOM_32_CHAR_SECRET"
     headscale:
       # The URL for the Headscale server
       url: "https://vpn.example.com"
@@ -64,6 +68,8 @@ headscale:
     issuer: "https://your-oidc-issuer.com"
     # OIDC client ID
     client_id: "YOUR_OIDC_CLIENT_ID_FOR_HEADSCALE"
+    # OIDC client secret
+    client_secret: "YOUR_OIDC_CLIENT_SECRET_FOR_HEADSCALE"
     # Name of the secret containing OIDC credentials
     secret_name: "oidc-secrets"
   config:

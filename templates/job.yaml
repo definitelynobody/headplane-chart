@@ -1,15 +1,21 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: headscale-generate-token
+  name: headplane-update-api-token
   namespace: {{ .Release.Namespace }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 spec:
+  backoffLimit: 5
+  ttlSecondsAfterFinished: 300
   template:
     spec:
       restartPolicy: Never
       serviceAccountName: headscale-token
       containers:
-        - name: headscale-generate-token
+        - name: headplane-update-api-token
           image: bitnami/kubectl:latest
           command:
             - /bin/sh
@@ -17,25 +23,73 @@ spec:
             - |
               set -e
               
-              echo "Waiting for headscale container to be Ready..."
-              while [ -z "$CONTAINER_STATUS" ]; do
-              CONTAINER_STATUS=$(kubectl get pod headplane-0 -n {{ .Release.Namespace }} -o=jsonpath="{.status.containerStatuses[?(@.name==\"headscale\")].state.running}")
-                sleep 1
+              echo "Waiting for Headscale to be ready..."
+              # Wait for headplane pod to be created and ready
+              kubectl wait --for=condition=ready pod/headplane-0 -n {{ .Release.Namespace }} --timeout=600s
+              
+              # Additional wait for Headscale service to be fully initialized
+              echo "Waiting for Headscale service to be fully ready..."
+              sleep 15
+              
+              # Test if headscale is responding
+              max_attempts=30
+              attempt=0
+              while [ $attempt -lt $max_attempts ]; do
+                if kubectl exec headplane-0 -c headscale -n {{ .Release.Namespace }} -- headscale apikeys list >/dev/null 2>&1; then
+                  echo "Headscale is responding to API calls"
+                  break
+                fi
+                echo "Headscale not ready yet, waiting... (attempt $((attempt + 1))/$max_attempts)"
+                attempt=$((attempt + 1))
+                sleep 10
               done
-
-              echo "Checking if Secret 'headscale-api-token' exists..."
-              if kubectl get secret headscale-api-token -n {{ .Release.Namespace }} >/dev/null 2>&1; then
-                echo "Secret already exists. Skipping token generation."
-                exit 0
-              fi
-
-              echo "Secret not found. Generating Headscale API token..."
-              TOKEN=$(kubectl -n {{ .Release.Namespace }} exec -i headplane-0 -c headscale -- headscale apikeys create -e 100y)
-
-              if [ -z "$TOKEN" ]; then
-                echo "Failed to retrieve API token"
+              
+              if [ $attempt -eq $max_attempts ]; then
+                echo "ERROR: Headscale failed to become ready after $max_attempts attempts"
                 exit 1
               fi
-
-              echo "Creating Kubernetes Secret..."
-              kubectl create secret generic headscale-api-token --from-literal=HEADPLANE_OIDC__HEADSCALE_API_KEY="$TOKEN" -n {{ .Release.Namespace }}
+              
+              echo "Creating Headscale API key..."
+              TOKEN=$(kubectl exec headplane-0 -c headscale -n {{ .Release.Namespace }} -- headscale apikeys create -e 100y)
+              echo "Generated API token: $TOKEN"
+              
+              echo "Updating headplane-config secret with real API token..."
+              cat <<EOF | kubectl apply -f -
+              apiVersion: v1
+              kind: Secret
+              metadata:
+                name: headplane-config
+                namespace: {{ .Release.Namespace }}
+              type: Opaque
+              stringData:
+                config.yaml: |
+                  server:
+                    host: "0.0.0.0"
+                    port: 3000
+                    cookie_secure: true
+                    cookie_secret: "{{ .Values.headplane.config.server.cookie_secret }}"
+                  headscale:
+                    url: "{{ .Values.headplane.config.headscale.url }}"
+                    config_path: "/etc/headscale/config.yaml"
+                    config_strict: "true"
+                  integration:
+                    kubernetes:
+                      enabled: true
+                      validate_manifest: true
+                      pod_name: "headplane-0"
+              {{- if .Values.headplane.oidc.enabled }}
+                  oidc:
+                    issuer: "{{ .Values.headplane.oidc.issuer | trimSuffix "/" }}{{- if not (hasSuffix "/.well-known/openid-configuration" .Values.headplane.oidc.issuer) }}/.well-known/openid-configuration{{- end }}"
+                    disable_api_key_login: {{ .Values.headplane.oidc.disable_api_key_login }}
+                    headscale_api_key: "$TOKEN"
+                    token_endpoint_auth_method: {{ .Values.headplane.oidc.token_endpoint_auth_method | quote }}
+                    redirect_uri: {{ .Values.headplane.oidc.redirect_uri | quote }}
+                    client_id: {{ .Values.headplane.oidc.client_id | quote }}
+              {{- end }}
+              EOF
+              
+              echo "Restarting Headplane to pick up new API token..."
+              kubectl rollout restart statefulset/headplane -n {{ .Release.Namespace }}
+              kubectl rollout status statefulset/headplane -n {{ .Release.Namespace }} --timeout=300s
+              
+              echo "Configuration updated successfully with real API token"

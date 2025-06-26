@@ -62,8 +62,6 @@ spec:
         volumeMounts:
         - name: headscale-data
           mountPath: /etc/headscale
-        - name: headplane-config
-          mountPath: /etc/headplane
         envFrom:
           {{- if .Values.headscale.oidc.enabled }}
           - secretRef:
