@@ -54,6 +54,9 @@ spec:
         {{- if .Values.relay.config.advertise_exit_node }}
         {{- $extraArgs = append $extraArgs "--advertise-exit-node" }}
         {{- end }}
+        {{- if .Values.relay.config.routes }}
+        {{- $extraArgs = append $extraArgs (printf "--advertise-routes=%s" .Values.relay.config.routes) }}
+        {{- end }}
         {{- if gt (len $extraArgs) 0 }}
         - name: TS_EXTRA_ARGS
           value: "{{ join " " $extraArgs }}"
@@ -77,7 +80,7 @@ spec:
         - name: TS_KUBE_SECRET
           value: "tailscale-auth"
         - name: TS_USERSPACE
-          value: "true"
+          value: "false"
         {{- if .Values.relay.config.authKey }}
         - name: TS_AUTHKEY
           value: "{{ .Values.relay.config.authKey }}"
