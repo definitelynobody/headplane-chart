@@ -57,6 +57,9 @@ spec:
         {{- if .Values.relay.config.routes }}
         {{- $extraArgs = append $extraArgs (printf "--advertise-routes=%s" .Values.relay.config.routes) }}
         {{- end }}
+        {{- if .Values.relay.config.advertise_tags }}
+        {{- $extraArgs = append $extraArgs (printf "--advertise-tags=%s" .Values.relay.config.advertise_tags) }}
+        {{- end }}
         {{- if gt (len $extraArgs) 0 }}
         - name: TS_EXTRA_ARGS
           value: "{{ join " " $extraArgs }}"
