@@ -146,6 +146,14 @@ headscale:
           #   - example.com
           # allowed_users:
           #   - alice@example.com
+      # Manual nameservers configuration
+      # Can be set dynamically via Skaffold setValueTemplates or other deployment tools
+      # These will completely override the default nameservers above when provided
+      manualNameservers:
+        # Global nameservers to use instead of defaults (semicolon-separated list of IPs)
+        global: ""
+        # Split DNS nameservers to use instead of defaults (format: domain1:ip1;ip2|domain2:ip3;ip4)
+        split: ""
   # Additional secrets to mount as environment variables
   envFrom: []
 # Tailscale relay configuration
@@ -170,6 +178,8 @@ relay:
     firewall_debug: "false"
     # Routes to advertise (adjust for your cluster CIDRs)
     routes: "10.42.0.0/16,10.43.0.0/16"
+    # Tags to advertise (comma-separated list)
+    advertise_tags: ""
   pvc:
     # Enable persistent storage for the relay
     enabled: false
